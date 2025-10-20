@@ -1,5 +1,9 @@
-package com.axonivy.utils.axonivydocscommon;
+package com.axonivy.utils.docs.common;
 
+/**
+ * Exception thrown when Spreadsheet conversion operations fail. This is a
+ * runtime exception that wraps underlying conversion errors.
+ */
 public class DocumentConversionException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
