@@ -12,9 +12,8 @@ import java.io.InputStream;
  * 
  * @param <C> the type of the concrete converter (for method chaining)
  * @param <D> the type of the document object (e.g., Workbook, Document)
- * @param <E> the type of exception thrown on conversion errors
  */
-public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D, E extends RuntimeException> {
+public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
   protected D document;
   protected Integer targetFormat;
 
@@ -36,7 +35,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       this.document = loadFromInputStream(inputStream);
       return self();
     } catch (Exception e) {
-      throw createException("Failed to load document", e);
+      throw new DocumentConversionException("Failed to load document", e);
     }
   }
 
@@ -52,7 +51,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       this.document = loadFromFile(file.getAbsolutePath());
       return self();
     } catch (Exception e) {
-      throw createException("Failed to load document from file", e);
+      throw new DocumentConversionException("Failed to load document from file", e);
     }
   }
 
@@ -68,7 +67,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       this.document = loadFromFile(filePath);
       return self();
     } catch (Exception e) {
-      throw createException("Failed to load document from path", e);
+      throw new DocumentConversionException("Failed to load document from path", e);
     }
   }
 
@@ -84,7 +83,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       this.document = loadFromInputStream(new ByteArrayInputStream(bytes));
       return self();
     } catch (Exception e) {
-      throw createException("Failed to load document from byte array", e);
+      throw new DocumentConversionException("Failed to load document from byte array", e);
     }
   }
 
@@ -123,7 +122,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       saveToStream(document, outputStream, targetFormat);
       return outputStream.toByteArray();
     } catch (Exception e) {
-      throw createException("Failed to convert document", e);
+      throw new DocumentConversionException("Failed to convert document", e);
     }
   }
 
@@ -142,14 +141,14 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
       File parentDir = outputFile.getParentFile();
       if (parentDir != null && !parentDir.exists()) {
         if (!parentDir.mkdirs() && !parentDir.exists()) {
-          throw createException("Failed to create parent directory: " + parentDir.getAbsolutePath(), null);
+          throw new DocumentConversionException("Failed to create parent directory: " + parentDir.getAbsolutePath(), null);
         }
       }
 
       saveToFile(document, outputPath, targetFormat);
       return outputFile;
     } catch (Exception e) {
-      throw createException("Failed to save converted document", e);
+      throw new DocumentConversionException("Failed to save converted document", e);
     }
   }
 
@@ -246,13 +245,4 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D, E>, D,
    * @return the PDF format constant
    */
   protected abstract int getPdfFormat();
-
-  /**
-   * Creates an exception of the appropriate type for this converter.
-   * 
-   * @param message the exception message
-   * @param cause the underlying cause
-   * @return the exception instance
-   */
-  protected abstract E createException(String message, Throwable cause);
 }
