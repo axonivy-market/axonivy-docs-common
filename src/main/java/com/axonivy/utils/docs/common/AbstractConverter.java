@@ -131,7 +131,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param outputPath the path where the converted file should be saved
    * @return the File object representing the saved file
-   * @throws E if conversion or file saving fails
+   * @throws DocumentConversionException if conversion or file saving fails
    */
   public File asFile(String outputPath) {
     validateConversionReady();
