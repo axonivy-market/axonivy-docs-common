@@ -28,7 +28,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param inputStream the input stream containing the document data
    * @return this converter instance for method chaining
-   * @throws E if document loading fails
+   * @throws DocumentConversionException if document loading fails
    */
   public C from(InputStream inputStream) {
     try {
@@ -44,7 +44,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param file the file containing the document
    * @return this converter instance for method chaining
-   * @throws E if document loading fails
+   * @throws DocumentConversionException if document loading fails
    */
   public C from(File file) {
     try {
@@ -60,7 +60,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param filePath the path to the file containing the document
    * @return this converter instance for method chaining
-   * @throws E if document loading fails
+   * @throws DocumentConversionException if document loading fails
    */
   public C from(String filePath) {
     try {
@@ -76,7 +76,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param bytes the byte array containing the document data
    * @return this converter instance for method chaining
-   * @throws E if document loading fails
+   * @throws DocumentConversionException if document loading fails
    */
   public C from(byte[] bytes) {
     try {
@@ -114,7 +114,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * Converts the document and returns the result as a byte array.
    * 
    * @return the converted document as byte array
-   * @throws E if conversion fails
+   * @throws DocumentConversionException if conversion fails
    */
   public byte[] asBytes() {
     validateConversionReady();
@@ -157,7 +157,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * 
    * @param outputFile the File object where the converted document should be saved
    * @return the File object representing the saved file
-   * @throws E if conversion or file saving fails
+   * @throws DocumentConversionException if conversion or file saving fails
    */
   public File asFile(File outputFile) {
     return asFile(outputFile.getAbsolutePath());
@@ -168,7 +168,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
    * is responsible for closing the returned InputStream.
    * 
    * @return an InputStream containing the converted document data
-   * @throws E if conversion fails
+   * @throws DocumentConversionException if conversion fails
    */
   public InputStream asInputStream() {
     byte[] bytes = asBytes();
