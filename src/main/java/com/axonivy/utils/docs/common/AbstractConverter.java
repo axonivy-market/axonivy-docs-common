@@ -141,7 +141,7 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
       File parentDir = outputFile.getParentFile();
       if (parentDir != null && !parentDir.exists()) {
         if (!parentDir.mkdirs() && !parentDir.exists()) {
-          throw new DocumentConversionException("Failed to create parent directory: " + parentDir.getAbsolutePath(), null);
+          throw new DocumentConversionException("Failed to create parent directory: " + parentDir.getAbsolutePath());
         }
       }
 
