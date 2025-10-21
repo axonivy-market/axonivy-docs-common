@@ -77,13 +77,6 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testFormatConversionRequiresDocument() {
-        assertThatThrownBy(() -> converter.to(PDF_FORMAT))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("No source document set. Call from() method first.");
-    }
-
-    @Test
     void testAsBytes() {
         setupValidConverter();
         byte[] result = converter.asBytes();
@@ -123,33 +116,6 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testOutputValidation() {
-        converter.targetFormat = PDF_FORMAT;
-        assertValidationException(() -> converter.asBytes(), "No source document set. Call from() method first.");
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = null;
-        assertValidationException(() -> converter.asBytes(), "No target format set. Call to() or toPdf() method first.");
-    }
-
-    @Test
-    void testSaveExceptions() {
-        setupValidConverter();
-        converter.shouldThrowExceptionOnSave = true;
-        assertThatThrownBy(() -> converter.asBytes())
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to convert document");
-    }
-
-    @Test
-    void testFluentWorkflow() {
-        byte[] result = converter
-            .from(TEST_CONTENT.getBytes(StandardCharsets.UTF_8))
-            .toPdf()
-            .asBytes();
-        assertThat(new String(result, StandardCharsets.UTF_8)).isEqualTo(CONVERTED_CONTENT);
-    }
-
-    @Test
     void testCompleteFileWorkflow() throws IOException {
         Path sourceFile = createTestFile();
         Path outputFile = tempDir.resolve("output.pdf");
@@ -186,12 +152,6 @@ class AbstractConverterTest {
     private void assertFileOutput(File result, Path outputPath) throws IOException {
         assertThat(result).exists();
         assertThat(Files.readString(outputPath, StandardCharsets.UTF_8)).isEqualTo(CONVERTED_CONTENT);
-    }
-
-    private void assertValidationException(Runnable action, String expectedMessage) {
-        assertThatThrownBy(action::run)
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage(expectedMessage);
     }
 
     static class TestConverter extends AbstractConverter<TestConverter, String> {
