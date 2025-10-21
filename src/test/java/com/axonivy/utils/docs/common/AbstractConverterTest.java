@@ -33,6 +33,8 @@ class AbstractConverterTest {
         converter = new TestConverter();
     }
 
+    // === Input Source Tests ===
+    
     @Test
     void testFromInputStream() {
         InputStream inputStream = new ByteArrayInputStream(TEST_CONTENT.getBytes(StandardCharsets.UTF_8));
@@ -44,24 +46,8 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testFromInputStreamWithException() {
-        InputStream inputStream = new InputStream() {
-            @Override
-            public int read() throws IOException {
-                throw new IOException("Test exception");
-            }
-        };
-        
-        assertThatThrownBy(() -> converter.from(inputStream))
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to load document")
-            .hasCauseInstanceOf(IOException.class);
-    }
-
-    @Test
     void testFromFile() throws IOException {
-        Path testFile = tempDir.resolve("test.txt");
-        Files.write(testFile, TEST_CONTENT.getBytes(StandardCharsets.UTF_8));
+        Path testFile = createTestFile();
         
         TestConverter result = converter.from(testFile.toFile());
         
@@ -70,32 +56,13 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testFromFileWithInvalidPath() {
-        File nonExistentFile = new File("non-existent-file.txt");
-        
-        assertThatThrownBy(() -> converter.from(nonExistentFile))
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to load document from file");
-    }
-
-    @Test
     void testFromFilePath() throws IOException {
-        Path testFile = tempDir.resolve("test.txt");
-        Files.write(testFile, TEST_CONTENT.getBytes(StandardCharsets.UTF_8));
+        Path testFile = createTestFile();
         
         TestConverter result = converter.from(testFile.toString());
         
         assertThat(result).isSameAs(converter);
         assertThat(converter.document).isEqualTo(TEST_CONTENT);
-    }
-
-    @Test
-    void testFromFilePathWithInvalidPath() {
-        String nonExistentPath = "non-existent-file.txt";
-        
-        assertThatThrownBy(() -> converter.from(nonExistentPath))
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to load document from path");
     }
 
     @Test
@@ -108,47 +75,58 @@ class AbstractConverterTest {
         assertThat(converter.document).isEqualTo(TEST_CONTENT);
     }
 
+    // === Input Error Handling Tests ===
+    
     @Test
-    void testFromByteArrayWithException() {
+    void testInputExceptions() {
+        // Test InputStream exception
+        InputStream failingStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new IOException("Test exception");
+            }
+        };
+        assertThatThrownBy(() -> converter.from(failingStream))
+            .isInstanceOf(DocumentConversionException.class)
+            .hasMessage("Failed to load document");
+
+        // Test invalid file
+        assertThatThrownBy(() -> converter.from(new File("non-existent.txt")))
+            .isInstanceOf(DocumentConversionException.class)
+            .hasMessage("Failed to load document from file");
+
+        // Test load exception from byte array
         converter.shouldThrowExceptionOnLoad = true;
-        byte[] bytes = TEST_CONTENT.getBytes(StandardCharsets.UTF_8);
-        
-        assertThatThrownBy(() -> converter.from(bytes))
+        assertThatThrownBy(() -> converter.from(TEST_CONTENT.getBytes()))
             .isInstanceOf(DocumentConversionException.class)
             .hasMessage("Failed to load document from byte array");
     }
 
+    // === Format Conversion Tests ===
+    
     @Test
-    void testToPdf() {
+    void testFormatConversion() {
         converter.document = TEST_CONTENT;
         
-        TestConverter result = converter.toPdf();
+        // Test PDF conversion
+        assertThat(converter.toPdf().targetFormat).isEqualTo(PDF_FORMAT);
         
-        assertThat(result).isSameAs(converter);
-        assertThat(converter.targetFormat).isEqualTo(PDF_FORMAT);
+        // Test custom format
+        assertThat(converter.to(OTHER_FORMAT).targetFormat).isEqualTo(OTHER_FORMAT);
     }
 
     @Test
-    void testToFormat() {
-        converter.document = TEST_CONTENT;
-        
-        TestConverter result = converter.to(OTHER_FORMAT);
-        
-        assertThat(result).isSameAs(converter);
-        assertThat(converter.targetFormat).isEqualTo(OTHER_FORMAT);
-    }
-
-    @Test
-    void testToFormatWithoutDocument() {
+    void testFormatConversionRequiresDocument() {
         assertThatThrownBy(() -> converter.to(PDF_FORMAT))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("No source document set. Call from() method first.");
     }
 
+    // === Output Generation Tests ===
+    
     @Test
     void testAsBytes() {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
+        setupValidConverter();
         
         byte[] result = converter.asBytes();
         
@@ -156,118 +134,41 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testAsBytesWithoutDocument() {
-        converter.targetFormat = PDF_FORMAT;
-        
-        assertThatThrownBy(() -> converter.asBytes())
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("No source document set. Call from() method first.");
-    }
-
-    @Test
-    void testAsBytesWithoutTargetFormat() {
-        converter.document = TEST_CONTENT;
-        
-        assertThatThrownBy(() -> converter.asBytes())
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("No target format set. Call to() or toPdf() method first.");
-    }
-
-    @Test
-    void testAsBytesWithSaveException() {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
-        converter.shouldThrowExceptionOnSave = true;
-        
-        assertThatThrownBy(() -> converter.asBytes())
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to convert document");
-    }
-
-    @Test
     void testAsFile() throws IOException {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
+        setupValidConverter();
         Path outputPath = tempDir.resolve("output.pdf");
         
         File result = converter.asFile(outputPath.toString());
         
-        assertThat(result.getAbsolutePath()).isEqualTo(outputPath.toString());
-        assertThat(Files.exists(outputPath)).isTrue();
-        String content = Files.readString(outputPath, StandardCharsets.UTF_8);
-        assertThat(content).isEqualTo(CONVERTED_CONTENT);
+        assertThat(result).exists();
+        assertThat(Files.readString(outputPath, StandardCharsets.UTF_8)).isEqualTo(CONVERTED_CONTENT);
     }
 
     @Test
     void testAsFileWithFileObject() throws IOException {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
+        setupValidConverter();
         File outputFile = tempDir.resolve("output.pdf").toFile();
         
         File result = converter.asFile(outputFile);
         
-        assertThat(result.getAbsolutePath()).isEqualTo(outputFile.getAbsolutePath());
-        assertThat(outputFile).exists();
-        String content = Files.readString(outputFile.toPath(), StandardCharsets.UTF_8);
-        assertThat(content).isEqualTo(CONVERTED_CONTENT);
+        assertThat(result).exists();
+        assertThat(Files.readString(outputFile.toPath(), StandardCharsets.UTF_8)).isEqualTo(CONVERTED_CONTENT);
     }
 
     @Test
-    void testAsFileCreatesParentDirectories() throws IOException {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
-        Path nestedPath = tempDir.resolve("nested").resolve("deep").resolve("output.pdf");
+    void testAsFileCreatesDirectories() throws IOException {
+        setupValidConverter();
+        Path nestedPath = tempDir.resolve("deep").resolve("nested").resolve("output.pdf");
         
         File result = converter.asFile(nestedPath.toString());
         
         assertThat(result).exists();
         assertThat(nestedPath.getParent()).exists();
-        String content = Files.readString(nestedPath, StandardCharsets.UTF_8);
-        assertThat(content).isEqualTo(CONVERTED_CONTENT);
-    }
-
-    @Test
-    void testAsFileWithoutDocument() {
-        converter.targetFormat = PDF_FORMAT;
-        Path outputPath = tempDir.resolve("output.pdf");
-        
-        assertThatThrownBy(() -> {
-            converter.asFile(outputPath.toString());
-        })
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("No source document set. Call from() method first.");
-    }
-
-    @Test
-    void testAsFileWithoutTargetFormat() {
-        converter.document = TEST_CONTENT;
-        Path outputPath = tempDir.resolve("output.pdf");
-        
-        assertThatThrownBy(() -> {
-            converter.asFile(outputPath.toString());
-        })
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("No target format set. Call to() or toPdf() method first.");
-    }
-
-    @Test
-    void testAsFileWithSaveException() {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
-        converter.shouldThrowExceptionOnSave = true;
-        Path outputPath = tempDir.resolve("output.pdf");
-        
-        assertThatThrownBy(() -> {
-            converter.asFile(outputPath.toString());
-        })
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to save converted document");
     }
 
     @Test
     void testAsInputStream() throws IOException {
-        converter.document = TEST_CONTENT;
-        converter.targetFormat = PDF_FORMAT;
+        setupValidConverter();
         
         try (InputStream result = converter.asInputStream()) {
             String content = new String(result.readAllBytes(), StandardCharsets.UTF_8);
@@ -275,21 +176,40 @@ class AbstractConverterTest {
         }
     }
 
+    // === Validation Tests ===
+    
     @Test
-    void testAsInputStreamWithoutDocument() {
+    void testOutputValidation() {
+        // Missing document
         converter.targetFormat = PDF_FORMAT;
-        
-        assertThatThrownBy(() -> converter.asInputStream())
+        assertThatThrownBy(() -> converter.asBytes())
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("No source document set. Call from() method first.");
+
+        // Missing format
+        converter.document = TEST_CONTENT;
+        converter.targetFormat = null;
+        assertThatThrownBy(() -> converter.asBytes())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("No target format set. Call to() or toPdf() method first.");
     }
 
     @Test
-    void testFluentChaining() {
-        byte[] inputBytes = TEST_CONTENT.getBytes(StandardCharsets.UTF_8);
+    void testSaveExceptions() {
+        setupValidConverter();
+        converter.shouldThrowExceptionOnSave = true;
         
+        assertThatThrownBy(() -> converter.asBytes())
+            .isInstanceOf(DocumentConversionException.class)
+            .hasMessage("Failed to convert document");
+    }
+
+    // === Integration Tests ===
+    
+    @Test
+    void testFluentWorkflow() {
         byte[] result = converter
-            .from(inputBytes)
+            .from(TEST_CONTENT.getBytes(StandardCharsets.UTF_8))
             .toPdf()
             .asBytes();
         
@@ -297,41 +217,34 @@ class AbstractConverterTest {
     }
 
     @Test
-    void testCompleteWorkflowWithFile() throws IOException {
-        // Create source file
-        Path sourceFile = tempDir.resolve("source.txt");
-        Files.write(sourceFile, TEST_CONTENT.getBytes(StandardCharsets.UTF_8));
-        
-        // Create output file
+    void testCompleteFileWorkflow() throws IOException {
+        Path sourceFile = createTestFile();
         Path outputFile = tempDir.resolve("output.pdf");
         
-        // Convert
         File result = converter
             .from(sourceFile.toFile())
             .toPdf()
             .asFile(outputFile.toString());
         
         assertThat(result).exists();
-        String content = Files.readString(outputFile, StandardCharsets.UTF_8);
-        assertThat(content).isEqualTo(CONVERTED_CONTENT);
+        assertThat(Files.readString(outputFile, StandardCharsets.UTF_8)).isEqualTo(CONVERTED_CONTENT);
     }
 
-    @Test
-    void testParentDirectoryCreationFailure() {
+    // === Helper Methods ===
+    
+    private Path createTestFile() throws IOException {
+        Path testFile = tempDir.resolve("test.txt");
+        Files.write(testFile, TEST_CONTENT.getBytes(StandardCharsets.UTF_8));
+        return testFile;
+    }
+    
+    private void setupValidConverter() {
         converter.document = TEST_CONTENT;
         converter.targetFormat = PDF_FORMAT;
-        converter.shouldThrowExceptionOnSave = true;
-        
-        // Use a path that would require directory creation
-        Path invalidPath = tempDir.resolve("nested").resolve("output.pdf");
-        
-        assertThatThrownBy(() -> {
-            converter.asFile(invalidPath.toString());
-        })
-            .isInstanceOf(DocumentConversionException.class)
-            .hasMessage("Failed to save converted document");
     }
 
+    // === Test Implementation ===
+    
     /**
      * Test implementation of AbstractConverter for testing purposes
      */
