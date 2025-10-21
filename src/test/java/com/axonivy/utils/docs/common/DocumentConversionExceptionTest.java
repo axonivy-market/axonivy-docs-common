@@ -7,13 +7,10 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 class DocumentConversionExceptionTest {
-
     @Test
     void testConstructorWithMessage() {
         String message = "Test error message";
-        
         DocumentConversionException exception = new DocumentConversionException(message);
-        
         assertThat(exception.getMessage()).isEqualTo(message);
         assertThat(exception.getCause()).isNull();
     }
@@ -22,9 +19,7 @@ class DocumentConversionExceptionTest {
     void testConstructorWithMessageAndCause() {
         String message = "Test error message";
         IOException cause = new IOException("IO error");
-        
         DocumentConversionException exception = new DocumentConversionException(message, cause);
-        
         assertThat(exception.getMessage()).isEqualTo(message);
         assertThat(exception.getCause()).isEqualTo(cause);
     }
@@ -32,9 +27,7 @@ class DocumentConversionExceptionTest {
     @Test
     void testConstructorWithCause() {
         IOException cause = new IOException("IO error");
-        
         DocumentConversionException exception = new DocumentConversionException(cause);
-        
         assertThat(exception.getCause()).isEqualTo(cause);
         assertThat(exception.getMessage()).isEqualTo("java.io.IOException: IO error");
     }
@@ -42,16 +35,12 @@ class DocumentConversionExceptionTest {
     @Test
     void testIsRuntimeException() {
         DocumentConversionException exception = new DocumentConversionException("Test message");
-        
         assertThat(exception).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void testSerialVersionUID() {
-        // Test that the class has the expected serialVersionUID
         DocumentConversionException exception = new DocumentConversionException("Test");
-        
-        // Verify it's serializable
         assertThat(exception).isInstanceOf(java.io.Serializable.class);
     }
 }
