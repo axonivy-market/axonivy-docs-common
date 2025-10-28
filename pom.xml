@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.axonivy.utils.docscommon</groupId>
   <artifactId>axonivy-docs-common</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>Axonivy Docs Common</name>
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
@@ -30,7 +30,7 @@
   </dependencies>
   <scm>
     <developerConnection>scm:git:https://github.com/axonivy-market/axonivy-docs-common.git</developerConnection>
-    <tag>v1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
   <distributionManagement>
     <repository>
