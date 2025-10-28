@@ -5,10 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 
-
 /**
  * Abstract base class for document conversion operations. Provides a fluent API
- * with common functionality for converting documents from one format to another.
+ * with common functionality for converting documents from one format to
+ * another.
  * 
  * @param <C> the type of the concrete converter (for method chaining)
  * @param <D> the type of the document object (e.g., Workbook, Document)
@@ -152,7 +152,8 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
   /**
    * Converts the document and saves it as a file.
    * 
-   * @param outputFile the File object where the converted document should be saved
+   * @param outputFile the File object where the converted document should be
+   *                   saved
    * @return the File object representing the saved file
    * @throws DocumentConversionException if conversion or file saving fails
    */
@@ -161,8 +162,8 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
   }
 
   /**
-   * Converts the document and returns it as an InputStream. Note: The caller
-   * is responsible for closing the returned InputStream.
+   * Converts the document and returns it as an InputStream. Note: The caller is
+   * responsible for closing the returned InputStream.
    * 
    * @return an InputStream containing the converted document data
    * @throws DocumentConversionException if conversion fails
@@ -219,9 +220,9 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
   /**
    * Saves the document to an OutputStream.
    * 
-   * @param document the document to save
+   * @param document     the document to save
    * @param outputStream the output stream to save to
-   * @param format the format to save in
+   * @param format       the format to save in
    * @throws Exception if saving fails
    */
   protected abstract void saveToStream(D document, ByteArrayOutputStream outputStream, int format) throws Exception;
@@ -229,9 +230,9 @@ public abstract class AbstractConverter<C extends AbstractConverter<C, D>, D> {
   /**
    * Saves the document to a file.
    * 
-   * @param document the document to save
+   * @param document   the document to save
    * @param outputPath the file path to save to
-   * @param format the format to save in
+   * @param format     the format to save in
    * @throws Exception if saving fails
    */
   protected abstract void saveToFile(D document, String outputPath, int format) throws Exception;
